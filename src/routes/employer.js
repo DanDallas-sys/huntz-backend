@@ -1,7 +1,7 @@
 import express from 'express';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { query } from '../config/db.js';
-import { createUploader } from '../config/storage.js';
+import { createUploader, uploadToR2 } from '../config/storage.js';
 
 const router     = express.Router();
 const cacUploader = createUploader('cac-documents');
@@ -44,11 +44,12 @@ router.put('/profile', requireAuth, requireRole('employer'), async (req, res) =>
 router.post('/upload-cac', requireAuth, requireRole('employer'), cacUploader.single('cac_document'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const url = await uploadToR2(req.file.buffer, 'cac-documents', req.user.id, req.file.originalname, req.file.mimetype);
     await query(
       'UPDATE employer_profiles SET cac_doc_url = $1, updated_at = NOW() WHERE user_id = $2',
-      [req.file.location, req.user.id]
+      [url, req.user.id]
     );
-    res.json({ message: 'CAC document uploaded', url: req.file.location });
+    res.json({ message: 'CAC document uploaded', url });
   } catch (err) {
     res.status(500).json({ error: 'Upload failed' });
   }

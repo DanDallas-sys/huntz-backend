@@ -2,7 +2,7 @@ import express from 'express';
 import { requireAuth, requireEmailVerified } from '../middleware/auth.js';
 import { verifyNIN, verifyCAC } from '../services/prembly.js';
 import { query } from '../config/db.js';
-import { createUploader } from '../config/storage.js';
+import { createUploader, uploadToR2 } from '../config/storage.js';
 
 const router  = express.Router();
 const idUploader = createUploader('identity-docs');
@@ -34,7 +34,7 @@ router.post('/nin', requireAuth, requireEmailVerified, async (req, res) => {
 router.post('/id-document', requireAuth, requireEmailVerified, idUploader.single('id_document'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    const fileUrl = req.file.location;
+    const fileUrl = await uploadToR2(req.file.buffer, 'identity-docs', req.user.id, req.file.originalname, req.file.mimetype);
     await query('UPDATE users SET id_doc_url = $1, id_verified = TRUE WHERE id = $2', [fileUrl, req.user.id]);
     res.json({ message: 'ID document uploaded and verified', url: fileUrl });
   } catch (err) {

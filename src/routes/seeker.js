@@ -1,7 +1,7 @@
 import express from 'express';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { query } from '../config/db.js';
-import { createUploader } from '../config/storage.js';
+import { createUploader, uploadToR2 } from '../config/storage.js';
 import { extractCVText } from '../utils/cvExtractor.js';
 import { parseCV } from '../services/openai.js';
 
@@ -54,7 +54,7 @@ router.post('/upload-cv', requireAuth, requireRole('seeker'), cvUploader.single(
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
-    const cvUrl = req.file.location;
+    const cvUrl = await uploadToR2(req.file.buffer, 'cvs', req.user.id, req.file.originalname, req.file.mimetype);
 
     // Parse CV in background — extract text then run AI parse
     const cvText = await extractCVText(cvUrl);
@@ -85,7 +85,9 @@ router.post('/upload-certificates', requireAuth, requireRole('seeker'), certUplo
     if (!req.files || !req.files.length) {
       return res.status(400).json({ error: 'No files uploaded' });
     }
-    const urls = req.files.map(f => f.location);
+    const urls = await Promise.all(
+      req.files.map(f => uploadToR2(f.buffer, 'certificates', req.user.id, f.originalname, f.mimetype))
+    );
 
     // Append to existing certificates
     await query(
