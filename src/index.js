@@ -16,6 +16,7 @@ import verificationRoutes from './routes/verification.js';
 import notificationRoutes from './routes/notifications.js';
 
 const app = express();
+app.set('trust proxy', 1);
 
 // ── Email verification (must be before CORS — clicked directly in browser) ─
 app.get('/api/auth/verify-email/:token', async (req, res) => {
