@@ -18,7 +18,7 @@
     "multer": "^1.4.5-lts.1",
     "multer-s3": "^3.0.1",
     "@aws-sdk/client-s3": "^3.400.0",
-    "openai": "^4.20.0",
+    "groq-sdk": "^0.9.0",
     "resend": "^2.0.0",
     "pdf-parse": "^1.1.1",
     "mammoth": "^1.6.0",

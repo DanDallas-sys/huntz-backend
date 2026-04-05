@@ -1,14 +1,15 @@
-import OpenAI from 'openai';
+import Groq from 'groq-sdk';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const MODEL = 'llama-3.3-70b-versatile';
 
 // ── Parse CV text into structured data ───────────────────
 export const parseCV = async (cvText) => {
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+    const response = await groq.chat.completions.create({
+      model: MODEL,
       response_format: { type: 'json_object' },
       messages: [{
         role: 'system',
@@ -46,8 +47,8 @@ ${cvText.slice(0, 6000)}`
 // ── Score applicant against a specific job ───────────────
 export const scoreApplication = async (seekerProfile, cvData, jobDetails) => {
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+    const response = await groq.chat.completions.create({
+      model: MODEL,
       response_format: { type: 'json_object' },
       messages: [{
         role: 'system',
@@ -88,11 +89,11 @@ Return:
   }
 };
 
-// ── Find matching jobs via web search ────────────────────
+// ── Find matching jobs ────────────────────────────────────
 export const findMatchingJobs = async (seekerProfile) => {
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+    const response = await groq.chat.completions.create({
+      model: MODEL,
       response_format: { type: 'json_object' },
       messages: [{
         role: 'system',
