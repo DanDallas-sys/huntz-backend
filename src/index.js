@@ -16,7 +16,6 @@ import verificationRoutes from './routes/verification.js';
 import notificationRoutes from './routes/notifications.js';
 
 const app = express();
-app.set('trust proxy', 1);
 
 // ── Security headers ─────────────────────────────────────
 app.use(helmet());
@@ -52,6 +51,9 @@ const authLimiter = rateLimit({
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'Huntz API', timestamp: new Date().toISOString() });
 });
+
+// ── Email verification (exempt from API key — clicked in browser) ─
+app.use('/api/auth/verify-email', authRoutes);
 
 // ── API key guard — all routes below require x-api-key ───
 app.use(requireApiKey);
