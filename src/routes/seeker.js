@@ -56,8 +56,8 @@ router.post('/upload-cv', requireAuth, requireRole('seeker'), cvUploader.single(
 
     const cvUrl = await uploadToR2(req.file.buffer, 'cvs', req.user.id, req.file.originalname, req.file.mimetype);
 
-    // Parse CV in background — extract text then run AI parse
-    const cvText = await extractCVText(cvUrl);
+    // Parse CV directly from buffer — no need to re-download from R2
+    const cvText = await extractCVText(req.file.buffer, req.file.originalname);
     let parsedData = null;
     if (cvText) {
       parsedData = await parseCV(cvText);
