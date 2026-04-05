@@ -17,6 +17,21 @@ import notificationRoutes from './routes/notifications.js';
 
 const app = express();
 
+// ── Email verification (must be before CORS — clicked directly in browser) ─
+app.get('/api/auth/verify-email/:token', async (req, res) => {
+  const { query } = await import('./config/db.js');
+  try {
+    const { rows } = await query(
+      'UPDATE users SET email_verified = TRUE, email_verify_token = NULL WHERE email_verify_token = $1 RETURNING id',
+      [req.params.token]
+    );
+    if (!rows.length) return res.status(400).send('Invalid or expired verification link.');
+    res.redirect(`${process.env.FRONTEND_URL}/dashboard?verified=true`);
+  } catch (err) {
+    res.status(500).send('Verification failed. Please try again.');
+  }
+});
+
 // ── Security headers ─────────────────────────────────────
 app.use(helmet());
 
@@ -51,9 +66,6 @@ const authLimiter = rateLimit({
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'Huntz API', timestamp: new Date().toISOString() });
 });
-
-// ── Email verification (exempt from API key — clicked in browser) ─
-app.use('/api/auth/verify-email', authRoutes);
 
 // ── API key guard — all routes below require x-api-key ───
 app.use(requireApiKey);
